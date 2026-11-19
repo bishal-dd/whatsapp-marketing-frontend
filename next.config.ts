@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   experimental: {
     agentFeedback: true,
   },
@@ -14,6 +13,10 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  // "/" has no page of its own: send people straight to the dashboard.
+  async redirects() {
+    return [{ source: "/", destination: "/dashboard", permanent: false }];
   },
 };
 

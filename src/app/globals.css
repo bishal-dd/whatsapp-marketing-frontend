@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+
+  /* Base */
+  --color-paper: #f4f6f4; /* cool sage-white page */
+  --color-ink: #13222a;
+  --color-ink-soft: #5a6a70;
+  --color-line: #dfe4e0;
+  --color-mist: #edf0ec;
+
+  /* Pine: actions and selection */
+  --color-lagoon: #1c7a63;
+  --color-lagoon-deep: #0e5b4b;
+  --color-lagoon-tint: #ddede6;
+
+  /* Saffron: the selection count, attention */
+  --color-marigold: #f2a20c;
+  --color-marigold-tint: #fdf1d6;
+
+  /* WhatsApp's own chat colours, for the preview only */
+  --color-wa: #d7f8cf;
+  --color-chat: #e6e1d6;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  @apply bg-paper text-ink antialiased;
+}
+
+/* One focus style everywhere, keyboard only. */
+:where(a, button, input, select, textarea, label, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-lagoon-deep);
+  outline-offset: 2px;
+}
+
+/* The send bar slides up once, when it first has something to send. */
+@keyframes bar-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+.bar-in {
+  animation: bar-in 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
