@@ -33,10 +33,14 @@ export function useSendNow() {
   const qc = useQueryClient();
   const orgId = useOrgId();
   return useMutation({
-    mutationFn: ({ input, name }: { input: SendInput; name: string }) => sendNow(input, name),
+    mutationFn: ({ input, name }: { input: SendInput; name: string }) =>
+      sendNow(input, name),
     onSuccess: () => {
       // The worker starts within a second; start polling the log.
-      setTimeout(() => qc.invalidateQueries({ queryKey: ["messages", orgId] }), 1500);
+      setTimeout(
+        () => qc.invalidateQueries({ queryKey: ["messages", orgId] }),
+        1500,
+      );
     },
   });
 }

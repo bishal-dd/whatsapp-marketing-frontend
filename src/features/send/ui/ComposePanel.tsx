@@ -28,6 +28,12 @@ import type { Template } from "@/src/features/templates/types/template";
 import { usePreview, useSendNow } from "../hooks/useSend";
 import type { Preview, SendInput, VariableSource } from "../types/send";
 import { NewTemplateDialog } from "../../templates/ui/NewTemplateDialog";
+import { useGroups } from "@/src/features/groups/hooks/useGroups";
+import type { GroupFilter } from "@/src/features/groups/types/group";
+import {
+  PutInGroupDialog,
+  sentGroupName,
+} from "@/src/features/groups/ui/PutInGroupDialog";
 
 type VarChoice = {
   kind: "first_name" | "name" | "phone" | "text";
@@ -285,6 +291,7 @@ function SendBar({
   onSend,
   done,
   onDismiss,
+  onSaveGroup,
 }: {
   state: "ready" | "loading" | { hint: string };
   count: number | null;
@@ -293,6 +300,8 @@ function SendBar({
   onSend: () => void;
   done: string | null;
   onDismiss: () => void;
+  /** Offered after a send: keep who got it as a group. */
+  onSaveGroup?: () => void;
 }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-3 sm:px-6 sm:pb-5">
@@ -318,6 +327,15 @@ function SendBar({
                 See progress
               </a>
             </p>
+            {onSaveGroup && (
+              <button
+                type="button"
+                onClick={onSaveGroup}
+                className="h-10 shrink-0 rounded-xl bg-white px-3 text-sm font-semibold text-ink hover:bg-marigold"
+              >
+                Save as group
+              </button>
+            )}
             <button
               type="button"
               onClick={onDismiss}
@@ -376,10 +394,13 @@ function SendBar({
 export function ComposePanel({
   selected,
   audience,
+  group,
   onSent,
 }: {
   selected: Set<string>;
   audience: Audience;
+  /** With "everyone", only this group gets it (when it's a group's id). */
+  group: GroupFilter;
   onSent: () => void;
 }) {
   const { can } = useCan();
@@ -393,6 +414,15 @@ export function ComposePanel({
   const [vars, setVars] = useState<VarChoice[]>([]);
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  const { data: groups } = useGroups();
+  const groupId = groups?.some((g) => g.id === group) ? group : undefined;
+  /** The send that just went out, to save who got it as a group. */
+  const [lastSend, setLastSend] = useState<{
+    campaignId: string;
+    count: number;
+    saved: boolean;
+  } | null>(null);
+  const [savingGroup, setSavingGroup] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const sendable = useMemo(
@@ -439,7 +469,7 @@ export function ComposePanel({
           variables: vars.map(toSource),
           recipients:
             audience === "all"
-              ? { mode: "all" }
+              ? { mode: "all", groupId }
               : { mode: "selected", contactIds: [...selected] },
         }
       : null;
@@ -493,9 +523,14 @@ export function ComposePanel({
     send.mutate(
       { input, name: `${template.name} · ${stamp}` },
       {
-        onSuccess: () => {
+        onSuccess: (r) => {
           setConfirming(false);
           setDone(`Sending to ${people}.`);
+          setLastSend({
+            campaignId: r.data.id,
+            count: preview.recipients,
+            saved: false,
+          });
           onSent();
         },
       },
@@ -710,6 +745,26 @@ export function ComposePanel({
         onSend={() => (send.reset(), setConfirming(true))}
         done={done}
         onDismiss={() => setDone(null)}
+        onSaveGroup={
+          lastSend && !lastSend.saved && can({ contact: ["update"] })
+            ? () => setSavingGroup(true)
+            : undefined
+        }
+      />
+
+      <PutInGroupDialog
+        open={savingGroup}
+        onClose={() => setSavingGroup(false)}
+        source={
+          lastSend
+            ? { campaignId: lastSend.campaignId, count: lastSend.count }
+            : null
+        }
+        defaultName={sentGroupName(groups)}
+        onDone={(m) => {
+          setLastSend((s) => (s ? { ...s, saved: true } : s));
+          setDone(m);
+        }}
       />
 
       <NewTemplateDialog

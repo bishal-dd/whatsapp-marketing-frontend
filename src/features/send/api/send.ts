@@ -6,10 +6,15 @@ const audience = (r: SendInput["recipients"]) => ({
   match: "any" as const,
   excludeTags: [],
   ...(r.mode === "selected" ? { contactIds: r.contactIds } : {}),
+  ...(r.mode === "all" && r.groupId ? { groupIds: [r.groupId] } : {}),
 });
 
 export const previewSend = (input: SendInput) =>
-  api<Data<Preview>>("POST", "/campaigns/preview", { templateId: input.templateId, variables: input.variables, audience: audience(input.recipients) });
+  api<Data<Preview>>("POST", "/campaigns/preview", {
+    templateId: input.templateId,
+    variables: input.variables,
+    audience: audience(input.recipients),
+  });
 
 /**
  * One click = a campaign under the hood (so it's queued, paced, limit-aware and
@@ -22,5 +27,9 @@ export async function sendNow(input: SendInput, name: string) {
     variables: input.variables,
     audience: audience(input.recipients),
   });
-  return api<Data<{ id: string; status: string }>>("POST", `/campaigns/${created.data.id}/send`, {});
+  return api<Data<{ id: string; status: string }>>(
+    "POST",
+    `/campaigns/${created.data.id}/send`,
+    {},
+  );
 }

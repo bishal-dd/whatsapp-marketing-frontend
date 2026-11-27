@@ -12,9 +12,15 @@ export interface Contact {
   /** Free text allowed until then (24h after their last message). */
   windowOpenUntil: string | null;
   createdAt: string;
+  /** Groups they're in (ids). Only in lists. */
+  groupIds?: string[];
 }
 
-export type ContactStatus = "all" | "subscribed" | "unsubscribed" | "no_consent";
+export type ContactStatus =
+  | "all"
+  | "subscribed"
+  | "unsubscribed"
+  | "no_consent";
 
 export interface NewContact {
   phone: string;

@@ -3,8 +3,10 @@ export type VariableSource =
   | { type: "field"; field: "first_name" | "name" | "phone"; fallback?: string }
   | { type: "text"; value: string };
 
-/** Ticked contacts, or everyone subscribed. */
-export type Recipients = { mode: "selected"; contactIds: string[] } | { mode: "all" };
+/** Ticked contacts, or everyone subscribed (in one group, if given). */
+export type Recipients =
+  | { mode: "selected"; contactIds: string[] }
+  | { mode: "all"; groupId?: string };
 
 export interface SendInput {
   templateId: string;
